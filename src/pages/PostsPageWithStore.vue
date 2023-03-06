@@ -1,29 +1,22 @@
 <template>
   <div>
+    <!-- <h1>{{ $store.state.post.limit }}</h1> -->
+    <!-- {{ $store.commit('post/setPosts') }} -->
+
     <my-dialog v-model:show="dialogVisible">
       <post-form @create="createPost" />
     </my-dialog>
 
-    <h2>{{ $store.state.isAuth ? 'User is authenticated' : 'User is not authenticated' }}</h2>
-    <h2>Likes: {{ $store.state.likes }}</h2>
-    <h2>Doubled: {{ $store.getters.doubleLikes }}</h2>
-    <div>
-      <MyButton @click="$store.commit('incrementLikes')">Like</MyButton>
-      <MyButton @click="$store.commit('decrementLikes')">Dislike</MyButton>
-    </div>
-
-    <br>
-
     <h1>Posts page</h1>
 
-    <my-input v-focus v-model="searchQuery" />
+    <my-input v-focus :model-value="searchQuery" @update:model-value="setSearch" />
 
     <div class="app__btns">
       <MyButton @click="showDialog">
         Add Post
       </MyButton>
 
-      <my-select v-model="selectedSort" :options="sortOptions" />
+      <my-select :model-value="selectedSort" @update:model-value="setSelectedSort" :options="sortOptions" />
     </div>
 
     <PostList :posts="sortedAndSearchedPosts" @remove='removePost' v-if="!isPostsLoading" />
@@ -36,28 +29,27 @@
 <script>
 import PostForm from '@/components/PostForm.vue'
 import PostList from '@/components/PostList.vue'
-import axios from 'axios'
+import { mapState, mapGetters, mapActions, mapMutations } from 'vuex'
 
 export default {
   components: { PostForm, PostList },
   data() {
     return {
-      posts: [{ id: 1232131232, title: 'sdasd', body: 'dsadsadsd' }],
       dialogVisible: false,
-      modificatorValue: '',
-      isPostsLoading: false,
-      selectedSort: 'id',
-      sortOptions: [
-        { value: 'title', name: 'By name' },
-        { value: 'body', name: 'By description' },
-      ],
-      searchQuery: '',
-      page: 1,
-      limit: 10,
-      totalPages: 0,
+      // modificatorValue: '',
     }
   },
   methods: {
+    ...mapMutations({
+      setPage: 'post/setPage',
+      setSearch: 'post/setSearchQuery',
+      setSelectedSort: 'post/setSelectedSort'
+    }),
+    ...mapActions({
+      fetchPosts: 'post/fetchPosts',
+      loadMorePosts: 'post/loadMorePosts'
+    }),
+
     createPost(newPost) {
       // problem in newPost, because of proxy
       this.posts.push({ ...newPost })
@@ -69,40 +61,7 @@ export default {
     showDialog() {
       this.dialogVisible = true;
     },
-    async fetchPosts() {
-      try {
-        this.isPostsLoading = true;
 
-        const response = await axios.get('https://jsonplaceholder.typicode.com/posts', {
-          params: {
-            _page: this.page,
-            _limit: this.limit,
-          }
-        })
-        this.totalPages = Math.ceil(response.headers['x-total-count'] / this.limit)
-        this.posts = response.data
-      } catch (e) {
-        alert('Error', String(e));
-      } finally {
-        this.isPostsLoading = false;
-      }
-    },
-    async loadMorePosts() {
-      try {
-        this.page += 1;
-
-        const response = await axios.get('https://jsonplaceholder.typicode.com/posts', {
-          params: {
-            _page: this.page,
-            _limit: this.limit,
-          }
-        })
-        this.totalPages = Math.ceil(response.headers['x-total-count'] / this.limit)
-        this.posts = [...this.posts, ...response.data]
-      } catch (e) {
-        alert('Error', String(e));
-      }
-    },
     changePage(pageNumber) {
       this.page = pageNumber;
     }
@@ -111,13 +70,20 @@ export default {
     this.fetchPosts()
   },
   computed: {
-    sortedPosts() {
-      // return [...this.posts].sort((post1, post2) => post1[this.selectedSort]?.localeCompare(post2[this.selectedSort]));
-      return this.posts
-    },
-    sortedAndSearchedPosts() {
-      return this.sortedPosts.filter(post => post.title.toLowerCase().includes(this.searchQuery.toLowerCase()))
-    }
+    ...mapState({
+      posts: state => state.post.posts,
+      isPostsLoading: state => state.post.isPostsLoading,
+      selectedSort: state => state.post.selectedSort,
+      sortOptions: state => state.post.sortOptions,
+      searchQuery: state => state.post.searchQuery,
+      page: state => state.post.page,
+      limit: state => state.post.limit,
+      totalPages: state => state.post.totalPages,
+    }),
+    ...mapGetters({
+      sortedPosts: 'post/sortedPosts',
+      sortedAndSearchedPosts: 'post/sortedAndSearchedPosts'
+    }),
   },
 } 
 </script>

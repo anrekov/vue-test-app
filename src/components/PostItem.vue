@@ -2,9 +2,6 @@
   <div class="post">
     <div>
       <div>{{ post.id }}</div>
-
-      <div>Likes = {{ $store.state.likes }}</div>
-
       <div><strong>Name: </strong>{{ post.title }}</div>
       <div><strong>Description: </strong>{{ post.body }}</div>
     </div>
