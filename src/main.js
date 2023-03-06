@@ -1,6 +1,14 @@
 import { createApp } from 'vue'
 import App from './App.vue'
-import router from './router'
-import store from './store'
+import components from '@/components/UI'
+import directives from '@/directives'
+import router from './router/router'
+import VIntersection from './directives/VIntersection'
 
-createApp(App).use(store).use(router).mount('#app')
+const app = createApp(App)
+
+components.forEach((el) => app.component(el.name, el))
+
+directives.forEach((el) => app.directive(el.name, el))
+
+app.use(router).mount('#app')
